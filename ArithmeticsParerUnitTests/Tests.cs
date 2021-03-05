@@ -8,63 +8,70 @@ namespace ArithmeticsParerUnitTests
     [TestFixture]
     public class ParsingTests
     {
-        public static int rawEval(string input) {
-            BaseExpression iex = BaseExpression.parse(input);
-            BaseExpression reduced = iex.EvaluateBe();
+        private static int RawEval(string input) {
+            var iex = BaseExpression.Parse(input);
+            var reduced = iex.EvaluateBe();
             Assert.True(reduced.ExtractRawInteger(out var result));
             return result;
+        }
+
+        private static BaseExpression Minimize(string input)
+        {
+            var iex = BaseExpression.Parse(input);
+            var reduced = iex.Normalize().EvaluateBe();
+            return reduced;
         }
         
         [Test]
         public void SimpleTest()
         {
-            Assert.AreEqual(5, rawEval("2+3"));
+            Assert.AreEqual(5, RawEval("2+3"));
         }
         
         [Test]
         public void AssocTest()
         {
-            Assert.AreEqual(9, rawEval("2 + (3 + 4)"));
-            Assert.AreEqual(9, rawEval("(2 + 3) + 4"));
+            Assert.AreEqual(9, RawEval("2 + (3 + 4)"));
+            Assert.AreEqual(9, RawEval("(2 + 3) + 4"));
         }
         
         [Test]
         public void SimpleSumWithNegativeTest()
         {
-            Assert.AreEqual(-7, rawEval("2 + -9"));
+            Assert.AreEqual(-7, RawEval("2 + -9"));
         }
         
         [Test]
         public void ExtraBracketAround()
         {
-            Assert.AreEqual(3, rawEval("(2 + 1)"));
+            Assert.AreEqual(3, RawEval("(2 + 1)"));
         }
         
         
         [Test]
         public void BracketsAroundEveryOperand()
         {
-            Assert.AreEqual(4, rawEval("((13) + (-9))"));
+            Assert.AreEqual(4, RawEval("((13) + (-9))"));
         }
         
         
         [Test]
         public void TestMultiply()
         {
-            Assert.AreEqual(120, rawEval("1*2*3*4*5"));
+            Assert.AreEqual(120, RawEval("1*2*3*4*5"));
         }
         
         
         [Test]
         public void PolynomialTest()
         {
-            Assert.AreEqual(-4830, rawEval("1*2*3 + 2*3*4 + 3*4*5 + 4*5*6 + -7*8*9*10"));
+            Assert.AreEqual(-4830, RawEval("1*2*3 + 2*3*4 + 3*4*5 + 4*5*6 + -7*8*9*10"));
         }
         
         [Test]
         public void ValidDoubleMinus()
         {
-            Assert.AreEqual(12, rawEval("7 - -5"));
+            Assert.AreEqual(12, RawEval("7 - -5"));
         }
         
         [Test]
@@ -72,7 +79,7 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.Throws<ParseException>(() =>
             {
-                BaseExpression.parse("(4 + 1 + 5");
+                BaseExpression.Parse("(4 + 1 + 5");
             });
         }
  
@@ -81,7 +88,7 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.Throws<ParseException>(() =>
             {
-                BaseExpression.parse("(4 + 1) + 5)");
+                BaseExpression.Parse("(4 + 1) + 5)");
             });
         }
         
@@ -91,7 +98,7 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.Throws<ParseException>(() =>
             {
-                BaseExpression.parse("");
+                BaseExpression.Parse("");
             });
         }
         
@@ -100,7 +107,7 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.Throws<ParseException>(() =>
             {
-                BaseExpression.parse("()");
+                BaseExpression.Parse("()");
             });
         }
         
@@ -109,7 +116,7 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.Throws<ParseException>(() =>
             {
-                BaseExpression.parse("3 + + 5");
+                BaseExpression.Parse("3 + + 5");
             });
         }
         
@@ -118,7 +125,7 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.Throws<ParseException>(() =>
             {
-                BaseExpression.parse("7 - - 5");
+                BaseExpression.Parse("7 - - 5");
             });
         }
         
@@ -129,8 +136,26 @@ namespace ArithmeticsParerUnitTests
         {
             Assert.DoesNotThrow(() =>
             {
-                BaseExpression.parse("x + 4");
+                BaseExpression.Parse("x + 4");
             });
+        }
+        [Test]
+        public void SimpleMinimizationTest()
+        {
+            Assert.AreEqual("x+9", Minimize("x + (4 + 5)").ToString());
+        }
+        
+        [Test]
+        public void RegroupOperatorsMinimizationTest()
+        {
+            Assert.AreEqual("x+9-y", Minimize("(x + 4) - (y - 5)").ToString());
+        }
+        
+        
+        [Test]
+        public void FuzzyTest()
+        {
+            var 
         }
     }
 }

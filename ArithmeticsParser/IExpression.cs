@@ -1,25 +1,24 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
+using System.Reflection.Emit;
 
 namespace ArithmeticsParser
 {
     public class ParseException : Exception
     {
-        private string _msg;
-        private int _position;
-
-        public ParseException(string msg, int position)
+        public ParseException(string msg, int position) 
+            : base("ParseException: " + msg + ", at position " + position + ".")
         {
-            _msg = msg;
-            _position = position;
+        }
+    }
+
+    public class AstException : Exception
+    {
+        public AstException(string msg) : base(msg)
+        {
         }
 
-        public override string ToString()
-        {
-            return "ParseException: " + _msg + ", at position " + _position + ".";
-        }
     }
 
     /**
@@ -43,7 +42,7 @@ namespace ArithmeticsParser
      */
     public abstract class BaseExpression : IExpression
     {
-        private bool _evaluatedConst = false;
+        private bool _evaluatedConst;
         private bool _cachedConstVal;
 
         public bool IsConst
@@ -119,7 +118,7 @@ namespace ArithmeticsParser
          * Method that produces expression by the given string.
          * If parse is not ok, exception ParseException is thrown
          */
-        public static BaseExpression parse(string input)
+        public static BaseExpression Parse(string input)
         {
             List<IExpression> stack = new List<IExpression>();
             for (var i = 0; i < input.Length;)
@@ -163,7 +162,7 @@ namespace ArithmeticsParser
                         break; // no action to parse spaces
                     default:
                         IExpression stackTop = stack.Count == 0 ? null : stack.Last();
-                        int dest = -1;
+                        int dest;
                         if (input[i] == '-')
                         {
                             if (stackTop is BaseExpression)
@@ -175,7 +174,7 @@ namespace ArithmeticsParser
                             }
                             if (stackTop is OrphanOperator || stackTop is OpenBracket || stackTop is null)
                             {
-                                int result = parseInteger(input, i, out dest);
+                                int result = ParseInteger(input, i, out dest);
                                 if (dest > i)
                                 {
                                     stack.Add(new IntegerExpression(result));
@@ -189,7 +188,7 @@ namespace ArithmeticsParser
                         }
                         
                         // try to parse as variable
-                        string asVarname = parseVarname(input, i, out dest);
+                        string asVarname = ParseVarname(input, i, out dest);
                         if (dest > i)
                         {
                             stack.Add(new VarExpression(asVarname));
@@ -199,7 +198,7 @@ namespace ArithmeticsParser
                         }
                         
                         // try to parse as integer
-                        int asInt = parseInteger(input, i, out dest);
+                        int asInt = ParseInteger(input, i, out dest);
                         if (dest > i)
                         {
                             stack.Add(new IntegerExpression(asInt));
@@ -212,16 +211,16 @@ namespace ArithmeticsParser
                         
                 }
             }
-            compactTerminal(ref stack);
+            CompactTerminal(ref stack);
             if (stack.Count != 1)
             {
                 throw new ParseException("not valid expression, maybe not enough brackets", input.Length);
             }
 
             IExpression top = stack[0];
-            if (top is BaseExpression)
+            if (top is BaseExpression expression)
             {
-                return (BaseExpression)top;
+                return expression;
             }
             else
             {
@@ -231,7 +230,7 @@ namespace ArithmeticsParser
             
         }
 
-        private static string parseVarname(string input, int parseFrom, out int destination)
+        private static string ParseVarname(string input, int parseFrom, out int destination)
         {
             destination = parseFrom;
             if (parseFrom >= input.Length || !Char.IsLetter(input[parseFrom]))
@@ -252,7 +251,7 @@ namespace ArithmeticsParser
             return input.Substring(parseFrom, destination - parseFrom);
         }
         
-        private static int parseInteger(string input, int parseFrom, out int destination)
+        private static int ParseInteger(string input, int parseFrom, out int destination)
         {
             destination = parseFrom;
             if (parseFrom >= input.Length)
@@ -292,10 +291,21 @@ namespace ArithmeticsParser
         // performs stack compaction on closing bracket if it can
         private static void compactStackOnCloseBracket(ref List<IExpression> stack, int position)
         {
+            // compact all operators until there is open bracket on the left.
+            // invariant is: all priorities are going with increasing priority
+            // Example:
+            //  ... 5 7 ( 0 2 4 8 9 
+            // let's denote {4} -- a compact operation. It takes both his arguments and merge them into binop
+            // for example: {4} === {[a] [*] [b]} => {[a * b]}
+            // it converts three stack values into one binop value (where priority of '*' considered as 4.
+            // let's add ')' virtually to the example (but there is no representation in memory of ')' on the stack:
+            //  ... 5 7 ( 0 2 4 8 {9} ) => ... 5 7 ( 0 2 4 {8} ) => ... 5 7 ( 0 2 {4} ) =>
+            // ... 5 7 ( 0 {2} ) =>... 5 7 ( {0} ) => 5 7
+            // if invariant is preserved, then we compact operators in right order
             const string closeUnbalancedMsg = "more closing brackets than opening brackets";
             const string emptyBracketsMsg   = "brackets enclose no value";
             const string orphanedOpMsg   = "orphaned binary operation with empty right operand";
-            var noLeftOperandPresented = "No left operand presented";
+            const string noLeftOperandPresented = "No left operand presented";
             compactLoop: while (true)
             {
                 if (stack.Count == 0)
@@ -303,15 +313,15 @@ namespace ArithmeticsParser
                     throw new ParseException(closeUnbalancedMsg, position);
                 }
 
-                int idRight = stack.Count - 1;
-                int idOp = idRight - 1;
-                int idLeft = idOp - 1;
+                var idRight = stack.Count - 1;
+                var idOp = idRight - 1;
+                var idLeft = idOp - 1;
 
                 switch (stack[idRight])
                 {
-                    case OpenBracket os:
+                    case OpenBracket _:
                         throw new ParseException(emptyBracketsMsg, position);
-                    case OrphanOperator os:
+                    case OrphanOperator _:
                         throw new ParseException(orphanedOpMsg, position);
                     case BaseExpression rhs:
                         if (idOp < 0)
@@ -321,7 +331,7 @@ namespace ArithmeticsParser
                         // right op is ok, check middle op
                         switch (stack[idOp])
                         {
-                            case OpenBracket os:
+                            case OpenBracket _:
                                 // ok, compact stack just with presented value
                                 stack.RemoveAt(idOp);
                                 return; // function ends on eliminated bracket
@@ -352,39 +362,40 @@ namespace ArithmeticsParser
             }
         }
     
-        // performs stack compaction on closing bracket if it can
+        // performs stack when new operator has been added.
         private static void compactStackOnOperand(ref List<IExpression> stack) {
             // if stack is less than 5:
-            // [a] [*] [b] [+] [c]
+            //    [a] [*] [b] [+] [c]
             // it is not interesting
+            // in the upper example we can compact:
+            //    [a] [*] [b] [+] [c] -> [a * b] [+] [c]
+            // because priority of * is more than priority of +
+            // invariant is: all priorities are going with increasing priority
+            //  ... 5 7 ( 0 2 4 8 9 
+            // when value of priority 5 comes into the game that's what happens:
+            // (curly brackets designate compact operation)
+            //  ... 5 7 ( 0 2 4 8{9}5 => ... 5 7 ( 0 2 4{8}5 =>  ... 5 7 ( 0 2 4 5
+            // if invariant is preserved, then we compact operators in right order
             while (stack.Count >= 5)
             {
                 int opId = stack.Count - 2;
                 int prevOpId = opId - 2;
                 
-                if (stack[opId] is OrphanOperator && stack[prevOpId] is OrphanOperator
-                   && stack[opId + 1] is BaseExpression
-                   && stack[prevOpId + 1] is BaseExpression
-                   && stack[prevOpId - 1] is BaseExpression
+                if (stack[opId] is OrphanOperator op
+                   && stack[prevOpId] is OrphanOperator prevOp
+                   && stack[opId + 1] is BaseExpression opnd3
+                   && stack[prevOpId + 1] is BaseExpression opnd2
+                   && stack[prevOpId - 1] is BaseExpression opnd1
+                   // check if priority of new operand is less than previous, so we can safely compact them
+                   && BinopExpression.Priority(prevOp.op) >= BinopExpression.Priority(op.op)
                 )
                 {
-                    OrphanOperator op = (OrphanOperator)stack[opId];
-                    OrphanOperator prevOp = (OrphanOperator)stack[prevOpId];
-                    if (BinopExpression.Priority(prevOp.op) >= BinopExpression.Priority(op.op))
-                    {
-                        // compact
-                        BaseExpression compaqed = new BinopExpression((BaseExpression) stack[prevOpId - 1],
-                            (BaseExpression) stack[prevOpId + 1], prevOp.op);
-                        IExpression top = stack[opId + 1];
-                        stack.RemoveRange(prevOpId - 1, 5);
-                        stack.Add(compaqed);
-                        stack.Add(op);
-                        stack.Add(top);
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    // compact
+                    BaseExpression compaqed = new BinopExpression(opnd1, opnd2, prevOp.op);
+                    stack.RemoveRange(prevOpId - 1, 5);
+                    stack.Add(compaqed);
+                    stack.Add(op);
+                    stack.Add(opnd3);
                 }
                 else
                 {
@@ -395,24 +406,27 @@ namespace ArithmeticsParser
         }
         
         
-        // performs stack compaction on closing bracket if it can
-        private static void compactTerminal(ref List<IExpression> stack) {
-            // terminal compaction consider this type of stack:
+        // performs final stack compaction free of brackets
+        private static void CompactTerminal(ref List<IExpression> stack) {
+            // this is final stack compaction.
+            // invariant is: all priorities are going with increasing priority
+            //               + no brackets can occur during final compaction!
+            // if invariant holds, than final compaction is correct.
+            
+            // terminal compaction consider this last three values of of stack:
             // [a] [*] [b]
-            // it is not interesting
+            // If there are not three values, it is not interesting
             while (stack.Count >= 3)
             {
                 int opId = stack.Count - 2;
                 
-                if (stack[opId] is OrphanOperator
-                      && stack[opId + 1] is BaseExpression
-                      && stack[opId - 1] is BaseExpression
+                if (stack[opId] is OrphanOperator op
+                      && stack[opId + 1] is BaseExpression rhs
+                      && stack[opId - 1] is BaseExpression lhs
                 )
                 {
-                    OrphanOperator op = (OrphanOperator)stack[opId];
                     // compact
-                    BaseExpression compaqed = new BinopExpression((BaseExpression) stack[opId - 1],
-                        (BaseExpression) stack[opId + 1], op.op);
+                    BaseExpression compaqed = new BinopExpression(lhs, rhs, op.op);
                     stack.RemoveRange(opId - 1, 3);
                     stack.Add(compaqed);
                 }
@@ -421,6 +435,187 @@ namespace ArithmeticsParser
                     break;
                 }
 
+            }
+        }
+        
+        // parsing methods are over
+
+        /**
+         * Acquire free variables of the expression
+         */
+        public string[] GetFreeVars()
+        {
+            // use visitor pattern :)
+            var fvv = new FreeVarsVisitor();
+            Visit(fvv);
+            return fvv.Vars.ToArray();
+        }
+
+        private class FreeVarsVisitor : IExpressionVisitor
+        {
+            // sorted set to define variable order
+            public SortedSet<string> Vars { get; } = new SortedSet<string>();
+            
+            public void VisitInteger(IntegerExpression i)
+            {
+            }
+
+            public void VisitBinop(BinopExpression bop)
+            {
+                bop.Lhs.Visit(this);
+                bop.Rhs.Visit(this);
+            }
+
+            public void VisitVar(VarExpression v)
+            {
+                Vars.Add(v.Name);
+            }
+        }
+        
+        
+        /**
+         * Normalization regroups operands with
+         */
+        public BaseExpression Normalize()
+        {
+            if (this is BinopExpression be)
+            {
+                DualOperandVisitor opVisitor = null;
+                BinopExpression.BinopType positiveOp, negativeOp;
+                switch (be.Op)
+                {
+                    case BinopExpression.BinopType.Add:
+                    case BinopExpression.BinopType.Sub:
+                        positiveOp = BinopExpression.BinopType.Add;
+                        negativeOp = BinopExpression.BinopType.Sub;
+                        break;
+                    case BinopExpression.BinopType.Mul:
+                    case BinopExpression.BinopType.Div:
+                        positiveOp = BinopExpression.BinopType.Mul;
+                        negativeOp = BinopExpression.BinopType.Div;
+                        break;
+                    default:
+                        be.Lhs = be.Lhs.Normalize();
+                        be.Rhs = be.Rhs.Normalize();
+                        return be;
+                }
+
+                opVisitor = new DualOperandVisitor(positiveOp, negativeOp);
+                be.Visit(opVisitor);
+                
+                var positiveOperand = FoldListWithOp(opVisitor.List, positiveOp);
+                var negativeOperand = FoldListWithOp(opVisitor.DualList, positiveOp);
+                if (negativeOperand != null)
+                {
+                    return new BinopExpression(positiveOperand, negativeOperand, negativeOp);
+                }
+                return positiveOperand;
+            }
+
+            return this;
+        }
+
+        private static BaseExpression FoldListWithOp(List<BaseExpression> list, BinopExpression.BinopType op)
+        {
+            var operands = list.Select(x => x.EvaluateBe()); // fold constants immediately
+            
+            var baseExpressions = operands as BaseExpression[] ?? operands.ToArray();
+            var constants = baseExpressions.Where(x => x.IsConst).ToArray();
+            var variables = baseExpressions.Where(x => x is VarExpression).ToArray();
+            var other = baseExpressions.Where(x => !(x.IsConst || x is VarExpression)).ToArray();
+            if (other.Length + constants.Length + variables.Length != list.Count())
+            {
+                throw new AstException("Wrong split of operands");
+            }
+
+            // fold constants and reduce
+            var reducedConst = FoldExpr(constants, null, op)?.EvaluateBe();
+            if (op == BinopExpression.BinopType.Add)
+            {
+                // make such order for addition: [complex] + [var] + [const]
+                return FoldExpr(other, FoldExpr(variables, reducedConst, op), op);
+            }
+            // for other operations use order: [const] * [var] * [complex]
+            var varAndComplex = FoldExpr(variables, FoldExpr(other, null, op), op);
+            if (reducedConst != null)
+            {
+                return new BinopExpression(reducedConst, varAndComplex, op);
+            }
+            return varAndComplex;
+        }
+
+        private static BaseExpression FoldExpr(BaseExpression[] constants, BaseExpression init, BinopExpression.BinopType op)
+        {
+            
+            // fold consts
+            BaseExpression expr = init;
+            if (constants.Length > 0)
+            {
+                var i = 0;
+                if (expr is null)
+                {
+                    expr = constants[0];
+                    i = 1;
+                }
+                for (; i < constants.Length; i++)
+                {
+                    expr = new BinopExpression(constants[i],expr, op);
+                }
+
+                expr = expr.EvaluateBe();
+            }
+
+            return expr;
+        }
+        
+        
+        private class DualOperandVisitor : IExpressionVisitor
+        {
+            // save operator instance to collect all operands with the same action
+            private BinopExpression.BinopType positive, negative;
+            private DualOperandVisitor dualVisitor;
+
+            public List<BaseExpression> List { get; } = new List<BaseExpression>();
+            public List<BaseExpression> DualList => dualVisitor.List;
+
+            private DualOperandVisitor(DualOperandVisitor prototype)
+            {
+                this.positive = prototype.positive;
+                this.negative = prototype.negative;
+                this.dualVisitor = prototype;
+            }
+            public DualOperandVisitor(BinopExpression.BinopType positive, BinopExpression.BinopType negative)
+            {
+                this.positive = positive;
+                this.negative = negative;
+                this.dualVisitor = new DualOperandVisitor(this);
+            }
+            
+            public void VisitInteger(IntegerExpression i)
+            {
+                List.Add(i);
+            }
+
+            public void VisitBinop(BinopExpression bop)
+            {
+                if (bop.Op == positive)
+                {
+                    bop.Lhs.Visit(this);
+                    bop.Rhs.Visit(this);
+                } else if (bop.Op == negative)
+                {
+                    bop.Lhs.Visit(this);
+                    bop.Rhs.Visit(dualVisitor); // the rhs is negative position for operators '-' and '/'
+                }
+                else
+                {
+                    List.Add(bop);
+                }
+            }
+
+            public void VisitVar(VarExpression v)
+            {
+                List.Add(v);
             }
         }
     }
@@ -457,11 +652,16 @@ namespace ArithmeticsParser
         {
             return true;
         }
+
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
     }
 
     public class VarExpression : BaseExpression
     {
-        private string Name { get; }
+        public string Name { get; }
 
         public VarExpression(string name)
         {
@@ -482,6 +682,11 @@ namespace ArithmeticsParser
         {
             return false;
         }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 
     public class BinopExpression : BaseExpression
@@ -496,21 +701,55 @@ namespace ArithmeticsParser
         }
         
         // BinopType priorities
-        private static readonly int[] _priority = {5, 5, 7, 7, 7};
+        private static readonly int[] BinopPriorityArray = {5, 5, 7, 7, 7};
+        private static readonly bool[] BinopCommutes = {true, false, true, false, false};
 
         public static int Priority(BinopType op)
         {
             int id = (int) op;
-            if (id < 0 || id >= _priority.Length)
+            if (id < 0 || id >= BinopPriorityArray.Length)
             {
-                return -1;
+                throw new ArgumentException("Invalid operator index");
             }
-            return _priority[id];
+            return BinopPriorityArray[id];
+        }        
+        
+        public static bool Commutes(BinopType op)
+        {
+            int id = (int) op;
+            if (id < 0 || id >= BinopPriorityArray.Length)
+            {
+                throw new ArgumentException("Invalid operator index");
+            }
+            return BinopCommutes[id];
         }
 
-        private BaseExpression Lhs;
-        private BaseExpression Rhs;
-        private BinopType Op;
+        public static string AsString(BinopType op)
+        {
+            switch (op)
+            {
+                case BinopType.Add: return "+";
+                case BinopType.Sub: return "-";
+                case BinopType.Mul: return "*";
+                case BinopType.Div: return "/";
+                case BinopType.Mod: return "%";
+            }
+
+            throw new ArgumentException("You should provide BinopType enum!");
+        }
+
+        public int Priority()
+        {
+            return Priority(Op);
+        }
+        public bool Commutes()
+        {
+            return Commutes(Op);
+        }
+
+        public BaseExpression Lhs;
+        public BaseExpression Rhs;
+        public BinopType Op;
 
         public BinopExpression(BaseExpression lhs, BaseExpression rhs, BinopType op)
         {
@@ -568,6 +807,23 @@ namespace ArithmeticsParser
                 case BinopType.Mod: return a % b;
                 default: throw new ArithmeticException("Can't apply operation #" + Op);
             }
+        }
+
+        public override string ToString()
+        {
+            var leftString = Lhs.ToString();
+            var rightString = Rhs.ToString();
+
+            if (Lhs is BinopExpression lhsOp && lhsOp.Priority() < Priority())
+            {
+                leftString = "(" + leftString + ")";
+            }
+            if (Rhs is BinopExpression rhsOp && rhsOp.Priority() < Priority())
+            {
+                rightString = "(" + rightString + ")";
+            }
+
+            return leftString + AsString(Op) + rightString;
         }
     }
 }

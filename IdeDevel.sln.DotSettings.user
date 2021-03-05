@@ -4,12 +4,12 @@
     &lt;TestId&gt;NUnit3x::84F0F9AD-7E16-4EE6-BF37-89EDDCF0E1D5::.NETFramework,Version=v4.8::ArithmeticsParerUnitTests.ParsingTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7ad998d9_002Dc223_002D4bba_002Db266_002Df60c47e2fbcd/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="PolynomialTest" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7ad998d9_002Dc223_002D4bba_002Db266_002Df60c47e2fbcd/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="PolynomialTest" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::84F0F9AD-7E16-4EE6-BF37-89EDDCF0E1D5::.NETFramework,Version=v4.8::ArithmeticsParerUnitTests.ParsingTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e6dec192_002Daf69_002D4884_002Da844_002D4f0a2d754418/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e6dec192_002Daf69_002D4884_002Da844_002D4f0a2d754418/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::84F0F9AD-7E16-4EE6-BF37-89EDDCF0E1D5::.NETFramework,Version=v4.8::ArithmeticsParerUnitTests.ParsingTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
