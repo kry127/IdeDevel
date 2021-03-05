@@ -22,7 +22,7 @@ namespace ArithmeticsParser
     }
 
     /**
-     * Interface of expression. Every expression should be visitable
+     * Interface of expression. Every expression should be visitable and evaluatable
      */
     public interface IExpression
     {
@@ -38,7 +38,7 @@ namespace ArithmeticsParser
     }
 
     /**
-     * This class is used as intermediate  representation to cache const, for instance
+     * This class represents arithmetic expressions and occupied with caching const flag, parsing and normalizing
      */
     public abstract class BaseExpression : IExpression
     {
@@ -470,6 +470,24 @@ namespace ArithmeticsParser
             {
                 Vars.Add(v.Name);
             }
+        }
+
+        /**
+         * Substitute all variable with names (as keys) by corresponding expression with mapping given in arg
+         */
+        public BaseExpression Subst(Dictionary<String, BaseExpression> subst)
+        {
+            if (this is VarExpression ve && subst.ContainsKey(ve.Name))
+            {
+                return subst[ve.Name];
+            }
+
+            if (this is BinopExpression be)
+            {
+                return new BinopExpression(be.Lhs.Subst(subst), be.Rhs.Subst(subst), be.Op);
+            }
+
+            return this;
         }
         
         

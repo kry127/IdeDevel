@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using ArithmeticsParser;
 using NUnit.Framework;
 
@@ -153,9 +154,50 @@ namespace ArithmeticsParerUnitTests
         
         
         [Test]
+        public void SubstitutionTestId()
+        {
+            BaseExpression expr = BaseExpression.Parse("x + y + z");
+            BaseExpression expr2 = expr.Subst(new Dictionary<string, BaseExpression>());
+            Assert.AreEqual(expr.ToString(), expr2.ToString());
+        }
+        
+        
+        [Test]
+        public void SubstitutionTestId2()
+        {
+            BaseExpression expr = BaseExpression.Parse("1 + 2 + x + y");
+            var subst = new Dictionary<string, BaseExpression>();
+            subst["a"] = new IntegerExpression(3);
+            subst["b"] = new IntegerExpression(9);
+            BaseExpression expr2 = expr.Subst(subst);
+            Assert.AreEqual(expr.ToString(), expr2.ToString());
+        }
+        
+        [Test]
+        public void SubstitutionSimpleTest()
+        {
+            BaseExpression exprExpected = BaseExpression.Parse("3 + (-1 * -4) / 2 - 0 % 17");
+            
+            BaseExpression expr = BaseExpression.Parse("x + (y * z) / w - k % l");
+            var subst = new Dictionary<string, BaseExpression>();
+            subst["x"] = new IntegerExpression(3);
+            subst["y"] = new IntegerExpression(-1);
+            subst["z"] = new IntegerExpression(-4);
+            subst["w"] = new IntegerExpression(2);
+            subst["k"] = new IntegerExpression(0);
+            subst["l"] = new IntegerExpression(17);
+            BaseExpression exprSubst = expr.Subst(subst);
+
+            exprExpected.EvaluateBe().ExtractRawInteger(out var expected);
+            exprSubst.EvaluateBe().ExtractRawInteger(out var actual);
+            Assert.AreEqual(expected, actual);
+        }
+        
+        
+        [Test]
         public void FuzzyTest()
         {
-            var 
+            
         }
     }
 }
