@@ -131,6 +131,7 @@ namespace ArithmeticsParser
                         break;
                     case ')':
                         compactStackOnCloseBracket(ref stack, i + 1);
+                        compactStackOnOperand(ref stack);
                         i++;
                         break;
                     case '+':

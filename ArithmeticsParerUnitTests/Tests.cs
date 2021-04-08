@@ -9,6 +9,7 @@ namespace ArithmeticsParerUnitTests
     [TestFixture]
     public class ParsingTests
     {
+        // Utilitiy functions
         private static int RawEval(string input) {
             var iex = BaseExpression.Parse(input);
             var reduced = iex.EvaluateBe();
@@ -22,7 +23,36 @@ namespace ArithmeticsParerUnitTests
             var reduced = iex.Normalize().EvaluateBe();
             return reduced;
         }
-        
+
+        private static BaseExpression GenerateRandomExpression(Random rnd, int lvl)
+        {
+            if (lvl <= 1)
+            {
+                var leafKind = rnd.Next(0, 1);
+                if (leafKind == 0)
+                {
+                    return new IntegerExpression(rnd.Next());
+                }
+                else
+                {
+                    return new VarExpression("v" + rnd.Next(0, 10));
+                }
+            }
+
+            var p = rnd.NextDouble();
+            if (p < 0.5)
+            {
+                var lhs = GenerateRandomExpression(rnd, rnd.Next(1, lvl - 1));
+                var rhs = GenerateRandomExpression(rnd, rnd.Next(1, lvl - 1));
+                BinopExpression.BinopType op = (BinopExpression.BinopType) rnd.Next(0, 5);
+                return new BinopExpression(lhs, rhs, op);
+            } else if (p < 0.75) {
+                return new IntegerExpression(rnd.Next());
+            } else {
+                return new VarExpression("v" + rnd.Next(0, 10));
+            }
+        }
+
         [Test]
         public void SimpleTest()
         {
@@ -195,9 +225,19 @@ namespace ArithmeticsParerUnitTests
         
         
         [Test]
-        public void FuzzyTest()
+        public void RandomTest_ExprToStringAndParse()
         {
-            
+            var maxTreeLvl = 50;
+            var N = 10000;
+            var rnd = new Random();
+            for (var i = 0; i < N; i++)
+            {
+                var rand = GenerateRandomExpression(rnd, maxTreeLvl);
+                var randAsString = rand.ToString();
+                var rand2 = BaseExpression.Parse(randAsString);
+                var rand2AsString = rand2.ToString();
+                Assert.AreEqual(randAsString, rand2AsString, "wrong value at iteration " + i);
+            }
         }
     }
 }
