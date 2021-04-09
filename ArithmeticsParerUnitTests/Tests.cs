@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using ArithmeticsParser;
 using NUnit.Framework;
 
@@ -237,6 +239,106 @@ namespace ArithmeticsParerUnitTests
                 var rand2 = BaseExpression.Parse(randAsString);
                 var rand2AsString = rand2.ToString();
                 Assert.AreEqual(randAsString, rand2AsString, "wrong value at iteration " + i);
+            }
+        }
+
+        [Test]
+        public void GenerateLibrary_ThreeArgsExpression()
+        {
+            var xyzExpr = BaseExpression.Parse("(66 + (x * -4)) / z + y / 9 + z * (x - y)");
+            xyzExpr.Compile("Test_GenerateLibrary_LaunchFunction");
+            
+            Assembly assembly = Assembly.LoadFrom("Test_GenerateLibrary_LaunchFunction.dll");
+
+            Type type = assembly.GetType("Evaluator");
+            MethodInfo evalMethod = type.GetMethod("Evaluate");
+            Assert.NotNull(evalMethod);
+
+            int x = 2, y = 3, z = 5;
+            var subst = new Dictionary<string, BaseExpression>();
+            subst["x"] = new IntegerExpression(x);
+            subst["y"] = new IntegerExpression(y);
+            subst["z"] = new IntegerExpression(z);
+            var substExpr = xyzExpr.Subst(subst);
+            
+            object evaluatorObject = Activator.CreateInstance(type);
+            int result = (int) evalMethod.Invoke(evaluatorObject, new object[] { x, y, z });
+            substExpr.EvaluateBe().ExtractRawInteger(out int expected);
+            Assert.AreEqual(expected, result);
+        }
+        
+        
+        [Test]
+        public void GenerateLibrary_RandomTestExpression()
+        {
+            
+            var maxTreeLvl = 150;
+            var N = 200;
+            var rnd = new Random();
+            for (var i = 0; i < N; i++)
+            {
+                var assemblyName = "Test_GenerateLibrary_RandomTestExpression" + i;
+                var assemblyPath = assemblyName + ".dll";
+                
+                var rand = GenerateRandomExpression(rnd, maxTreeLvl);
+                rand.Compile(assemblyName);
+
+                Assembly assembly = Assembly.LoadFrom(assemblyPath);
+
+                Type type = assembly.GetType("Evaluator");
+                MethodInfo evalMethod = type.GetMethod("Evaluate");
+                Assert.NotNull(evalMethod);
+
+                var freeVars = rand.GetFreeVars();
+                var subst = new Dictionary<string, BaseExpression>();
+                var substObjects = new object[freeVars.Length];
+                
+                for (var k = 0; k < freeVars.Length; k++)
+                {
+                    var varValue = rnd.Next();
+                    subst[freeVars[k]] = new IntegerExpression(varValue);
+                    substObjects[k] = varValue;
+                }
+                var substExpr = rand.Subst(subst);
+            
+                object evaluatorObject = Activator.CreateInstance(type);
+                
+                int expected = 0, actual = 0;
+                bool substThrownDivideByZero = false, dllThrownDivideByZero = false;
+                try
+                {
+                    substExpr.EvaluateBe().ExtractRawInteger(out expected);
+                }
+                catch (DivideByZeroException)
+                {
+                    substThrownDivideByZero = true;
+                }
+
+                try
+                {
+                    actual = (int) evalMethod.Invoke(evaluatorObject, substObjects);
+                }
+                catch (TargetInvocationException ex)
+                {
+                    if (ex.InnerException is DivideByZeroException)
+                    {
+                        dllThrownDivideByZero = true;
+                    }
+                    else
+                    {
+                        throw ex;
+                    }
+                }
+                Assert.AreEqual(substThrownDivideByZero, dllThrownDivideByZero);
+                if (!substThrownDivideByZero)
+                {
+                    Assert.AreEqual(expected, actual, "result mismatch at iteration " + i);
+                }
+                
+                if(File.Exists(assemblyPath))
+                {
+                    File.Delete(assemblyPath);
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace ArithmeticsParser
@@ -637,6 +638,83 @@ namespace ArithmeticsParser
                 List.Add(v);
             }
         }
+
+        private class IlEmitterVisitor : IExpressionVisitor
+        {
+            private ILGenerator _ilGen;
+            private Dictionary<string, int> _freeVarsDict;
+            
+            public IlEmitterVisitor(ILGenerator ilGen, string[] freeVars)
+            {
+                _ilGen = ilGen;
+                _freeVarsDict = new Dictionary<string, int>();
+                for (int i = 0; i < freeVars.Length; i++)
+                {
+                    _freeVarsDict[freeVars[i]] = i;
+                }
+            }
+            public void VisitInteger(IntegerExpression i)
+            {
+                _ilGen.Emit(OpCodes.Ldc_I4, i.Value);
+            }
+            
+            public void VisitVar(VarExpression v)
+            {
+                _ilGen.Emit(OpCodes.Ldarg, 1 + _freeVarsDict[v.Name]);
+            }
+
+            public void VisitBinop(BinopExpression bop)
+            {
+                bop.Lhs.Visit(this);
+                bop.Rhs.Visit(this);
+                switch (bop.Op)
+                {
+                    case BinopExpression.BinopType.Add: _ilGen.Emit(OpCodes.Add); break;
+                    case BinopExpression.BinopType.Sub: _ilGen.Emit(OpCodes.Sub); break;
+                    case BinopExpression.BinopType.Mul: _ilGen.Emit(OpCodes.Mul); break;
+                    case BinopExpression.BinopType.Div: _ilGen.Emit(OpCodes.Div); break;
+                    case BinopExpression.BinopType.Mod: _ilGen.Emit(OpCodes.Rem); break;
+                }
+            }
+        }
+
+        /// compilation section
+        public void Compile(string assemblyName)
+        {
+            AssemblyName aName = new AssemblyName(assemblyName);
+            AssemblyBuilder ab =
+                AppDomain.CurrentDomain.DefineDynamicAssembly(
+                    aName,
+                    AssemblyBuilderAccess.Save);
+
+            // For a single-module assembly, the module name is usually
+            // the assembly name plus an extension.
+            ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll");
+            TypeBuilder tb = mb.DefineType( "Evaluator", TypeAttributes.Public);
+            
+            // building evaluator method
+            var freeVars = GetFreeVars();
+            // this method accepts as many int parameters as they are free variables of expression
+            var types = from number in freeVars select typeof(int);
+            MethodBuilder methEvaluator = tb.DefineMethod(
+                "Evaluate",
+                MethodAttributes.Public,
+                typeof(int),
+                types.ToArray()
+                );
+
+            ILGenerator methEvaluatorIl = methEvaluator.GetILGenerator();
+            // launch visitor to traverse instructions
+            var ilEmitVisitor = new IlEmitterVisitor(methEvaluatorIl, freeVars);
+            Visit(ilEmitVisitor);
+            // don't forget to emit return code
+            methEvaluatorIl.Emit(OpCodes.Ret);
+
+            // Finish the type.
+            Type t = tb.CreateType();
+            ab.Save(aName.Name + ".dll");
+        }
+        // end of compilation section
     }
     
 
