@@ -42,9 +42,12 @@
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="TokenParser.cs" />
+        <Compile Include="tokens\CommentToken.cs" />
         <Compile Include="tokens\IdentifierToken.cs" />
         <Compile Include="tokens\NumberToken.cs" />
         <Compile Include="tokens\StringToken.cs" />
+        <Compile Include="tokens\SymbolToken.cs" />
+        <Compile Include="tokens\TokenParseUtility.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
