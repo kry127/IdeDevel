@@ -1,16 +1,24 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">/home/kry127/.cache/JetBrains/Rider2020.3/resharper-host/temp/Rider/vAny/CoverageData/_IdeDevel.168087300/Snapshot/snapshot.utdcvr</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=727bc01f_002Dd111_002D4cc2_002Da2cf_002Dae068b9e7f6f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Test1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::84F0F9AD-7E16-4EE6-BF37-89EDDCF0E1D5::.NETFramework,Version=v4.8::ArithmeticsParerUnitTests.ParsingTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=73cfcda4_002D5851_002D48ed_002Dbe8f_002D0497cc5112fe/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="ParseComments" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;NUnit3x::3420E217-24DD-4F09-AA04-E4158B6F2BD7::.NETFramework,Version=v4.8::FreePascalLexerUnitTests.Tests.ParseComments&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7ad998d9_002Dc223_002D4bba_002Db266_002Df60c47e2fbcd/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="PolynomialTest" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::84F0F9AD-7E16-4EE6-BF37-89EDDCF0E1D5::.NETFramework,Version=v4.8::ArithmeticsParerUnitTests.ParsingTests&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::3420E217-24DD-4F09-AA04-E4158B6F2BD7::.NETFramework,Version=v4.8::FreePascalLexerUnitTests.Tests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e6dec192_002Daf69_002D4884_002Da844_002D4f0a2d754418/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e6dec192_002Daf69_002D4884_002Da844_002D4f0a2d754418/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::84F0F9AD-7E16-4EE6-BF37-89EDDCF0E1D5::.NETFramework,Version=v4.8::ArithmeticsParerUnitTests.ParsingTests&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::3420E217-24DD-4F09-AA04-E4158B6F2BD7::.NETFramework,Version=v4.8::FreePascalLexerUnitTests.Tests.ParseNumber_Test1&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

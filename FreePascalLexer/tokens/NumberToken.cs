@@ -5,13 +5,15 @@ namespace FreePascalLexer.tokens
 {
     public class NumberToken : IToken
     {
-        private static Char[] HEX = new[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'a', 'b', 'c', 'd', 'e'};
+        private static Char[] HEX = new[]
+            {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'a', 'b', 'c', 'd', 'e'};
+
         private static Char[] DEC = new[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
         private static Char[] OCT = new[] {'0', '1', '2', '3', '4', '5', '6', '7'};
         private static Char[] BIN = new[] {'0', '1'};
-        
+
         private int _from, _to;
-        
+
         public Tuple<int, int> Position()
         {
             return new Tuple<int, int>(_from, _to);
@@ -31,24 +33,26 @@ namespace FreePascalLexer.tokens
         {
             result = null;
             next = -1;
-            
+
             var index2 = index;
             if (index2 >= source.Length)
             {
                 return false;
             }
+
             // parse sign (optional)
             if (source[index] == '+' || source[index] == '-')
             {
                 index2++;
             }
+
             if (index2 >= source.Length)
             {
                 return false;
             }
-            
+
             // parse unsigned number
-            var ok =  ParseUnsignedNumber(source, index2, out result, out var nnext);
+            var ok = ParseUnsignedNumber(source, index2, out result, out var nnext);
             // process result if OK
             if (ok)
             {
@@ -86,6 +90,7 @@ namespace FreePascalLexer.tokens
             {
                 return ok;
             }
+
             if (source[nextIndex] == '.')
             {
                 var ok2 = ParseDigitSequence(source, nextIndex + 1, DEC, out var result2, out var nnext);
@@ -94,17 +99,32 @@ namespace FreePascalLexer.tokens
                     next = nnext;
                     nextIndex = result2._to;
                 }
+                else
+                {
+                    return false;
+                }
             }
+
             // and maybe scale factor
-            if (ParseScaleFactor(source, nextIndex, out var result3, out var nnnext))
+            if (nextIndex < source.Length && (source[nextIndex] == 'e' || source[nextIndex] == 'E'))
             {
-                next = nnnext;
+                if (ParseScaleFactor(source, nextIndex, out var result3, out var nnnext))
+                {
+                    next = nnnext;
+                }
+                else
+                {
+                    return false;
+                }
             }
+
+            result._to = next;
 
             return ok;
         }
-    
-        private static bool ParseScaleFactor(string source, int index, out NumberToken result, out int next) {
+
+        private static bool ParseScaleFactor(string source, int index, out NumberToken result, out int next)
+        {
             result = null;
             next = -1;
             var index2 = index;
@@ -112,6 +132,7 @@ namespace FreePascalLexer.tokens
             {
                 return false;
             }
+
             // parse 'E'
             if (source[index2] == 'E' || source[index2] == 'e')
             {
@@ -121,21 +142,23 @@ namespace FreePascalLexer.tokens
             {
                 return false;
             }
-            
+
             if (index2 >= source.Length)
             {
                 return false;
             }
+
             // parse sign (optional)
             if (source[index2] == '+' || source[index2] == '-')
             {
                 index2++;
             }
+
             if (index2 >= source.Length)
             {
                 return false;
             }
-            
+
             // parse unsigned number
             var ok = ParseDigitSequence(source, index2, DEC, out result, out next);
             // process result if OK
@@ -152,20 +175,23 @@ namespace FreePascalLexer.tokens
         {
             result = null;
             next = -1;
-            
+
             if (index >= source.Length)
             {
                 return false;
             }
+
             // parse sign (optional)
             var ok = false;
             if (source[index] == '$')
             {
                 ok = ParseDigitSequence(source, index + 1, HEX, out result, out next);
-            } else if (source[index] == '&')
+            }
+            else if (source[index] == '&')
             {
                 ok = ParseDigitSequence(source, index + 1, OCT, out result, out next);
-            } else if (source[index] == '%')
+            }
+            else if (source[index] == '%')
             {
                 ok = ParseDigitSequence(source, index + 1, BIN, out result, out next);
             }
@@ -182,7 +208,8 @@ namespace FreePascalLexer.tokens
             return ok;
         }
 
-        private static bool ParseDigitSequence(string source, int index, Char[] allowed, out NumberToken result, out int next)
+        private static bool ParseDigitSequence(string source, int index, Char[] allowed, out NumberToken result,
+            out int next)
         {
             result = null;
             next = -1;
@@ -198,6 +225,7 @@ namespace FreePascalLexer.tokens
                 index++;
                 next = index;
             }
+
             result._to = index;
             next = index;
             return true;

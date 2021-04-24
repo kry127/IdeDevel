@@ -113,7 +113,27 @@ namespace FreePascalLexer.tokens
                     }
                 }
                 
+                if (TokenParseUtility.HasPrefix(source, index, "(*"))
+                {
+                    index += 2;
+                    closeStack.AddFirst((index, "*)"));
+                    continue;
+                }
+                else if (TokenParseUtility.HasPrefix(source, index, "{"))
+                {
+                    index += 1;
+                    closeStack.AddFirst((index, "}"));
+                    continue;
+                }
+                else if (TokenParseUtility.HasPrefix(source, index, "//"))
+                {
+                    index += 2;
+                    closeStack.AddFirst((index, "\n"));
+                    continue;
+                }
+                
                 // else this is just the char, skip...
+                index++;
             }
 
             next = index;

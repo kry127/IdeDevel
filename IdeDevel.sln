@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArithmeticsParerUnitTests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreePascalLexer", "FreePascalLexer\FreePascalLexer.csproj", "{5C0D0A00-1A67-4C3D-B853-E37A36110512}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreePascalLexerUnitTests", "FreePascalLexerUnitTests\FreePascalLexerUnitTests.csproj", "{3420E217-24DD-4F09-AA04-E4158B6F2BD7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{5C0D0A00-1A67-4C3D-B853-E37A36110512}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C0D0A00-1A67-4C3D-B853-E37A36110512}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C0D0A00-1A67-4C3D-B853-E37A36110512}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3420E217-24DD-4F09-AA04-E4158B6F2BD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3420E217-24DD-4F09-AA04-E4158B6F2BD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3420E217-24DD-4F09-AA04-E4158B6F2BD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3420E217-24DD-4F09-AA04-E4158B6F2BD7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

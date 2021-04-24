@@ -20,13 +20,6 @@ namespace FreePascalLexer
             var next = 0;
             while (index < s.Length)
             {
-                if (Char.IsWhiteSpace(s[index]))
-                {
-                    // skip spaces
-                    index++;
-                    continue;
-                }
-
                 // try to parse as number
                 if (NumberToken.ParseNumber(s, index, out var tokenNumber, out next))
                 {
@@ -67,6 +60,13 @@ namespace FreePascalLexer
                 {
                     ll.AddLast(tokenSymbol);
                     index = next;
+                    continue;
+                }
+                
+                if (Char.IsWhiteSpace(s[index]))
+                {
+                    // skip spaces
+                    index++;
                     continue;
                 }
                 

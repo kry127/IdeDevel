@@ -80,6 +80,8 @@ namespace FreePascalLexer.tokens
             {
                 return false;
             }
+            // advance index to the end of string definition
+            index++;
             // else success
             result._to = index;
             next = index;
