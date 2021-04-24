@@ -35,12 +35,12 @@ namespace FreePascalLexer.tokens
             if (TokenParseUtility.HasPrefix(source, index, "(*"))
             {
                 index += 2;
-                closeStack.AddLast((index, "*)"));
+                closeStack.AddFirst((index, "*)"));
             }
             else if (TokenParseUtility.HasPrefix(source, index, "{"))
             {
                 index += 1;
-                closeStack.AddLast((index, "}"));
+                closeStack.AddFirst((index, "}"));
             }
             else if (TokenParseUtility.HasPrefix(source, index, "//"))
             {
@@ -88,10 +88,11 @@ namespace FreePascalLexer.tokens
                     if (TokenParseUtility.HasPrefix(source, index, prevCommType))
                     {
                         // prefix elimination
-                        for (var k = 0; k < i; k++)
+                        for (var k = 0; k <= i; k++)
                         {
                             // put all disposed inner comments (newlined mostly)
                             var pref = closeStack.First();
+                            closeStack.RemoveFirst();
                             CommentToken ct = new CommentToken();
                             ct._from = pref.Item1;
                             ct._to = index;

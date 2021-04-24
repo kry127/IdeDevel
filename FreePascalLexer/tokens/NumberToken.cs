@@ -64,14 +64,38 @@ namespace FreePascalLexer.tokens
         }
 
 
+        private static bool AllowedAfterParsedNumber(string source, NumberToken result)
+        {
+            if (result == null)
+            {
+                return false;
+            }
+
+            // check last character if any
+            if (result._to < source.Length && (
+                    Char.IsLetterOrDigit(source[result._to])
+                    || source[result._to] == '_')
+            )
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         private static bool ParseUnsignedNumber(string source, int index, out NumberToken result, out int next)
         {
             if (ParseUnsignedReal(source, index, out result, out next))
             {
-                return true;
+                return AllowedAfterParsedNumber(source, result);
             }
 
-            return ParseUnsignedInteger(source, index, out result, out next);
+            if (ParseUnsignedInteger(source, index, out result, out next))
+            {
+                return AllowedAfterParsedNumber(source, result);
+            }
+
+            return false;
         }
 
 
