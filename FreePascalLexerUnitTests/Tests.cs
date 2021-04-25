@@ -86,7 +86,11 @@ namespace FreePascalLexerUnitTests
         {
             foreach ((var shouldFail, var pascalString, var listOfPositions) in new[]
             {
-                (false, "  { my beautiful curly braced comment! }", new[] {(2, 5)}),
+                (false, "  { my beautiful curly braced comment! }", new[] {(2, 40)}),
+                (false, "     // another comment", new[] {(5, 23)}),
+                (false, "(* kek *)", new[] {(0, 9)}),
+                (false, "(* {foo} {bar} *)", new[] {(3, 8), (9, 14), (0, 17)}),
+                //(false, "{ (* some *) // body { once } }", new[] {(0, 9)}),
             })
             {
                 if (shouldFail)
@@ -103,7 +107,7 @@ namespace FreePascalLexerUnitTests
                     {
                         var token = tokens[i];
                         (var from, var to) = listOfPositions[i];
-                        Assert.AreEqual(TokenType.String, token.Type());
+                        Assert.AreEqual(TokenType.Comment, token.Type());
                         Assert.AreEqual(from, token.Position().Item1);
                         Assert.AreEqual(to, token.Position().Item2);
                     }

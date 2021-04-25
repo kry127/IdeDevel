@@ -34,13 +34,13 @@ namespace FreePascalLexer.tokens
             
             if (TokenParseUtility.HasPrefix(source, index, "(*"))
             {
-                index += 2;
                 closeStack.AddFirst((index, "*)"));
+                index += 2;
             }
             else if (TokenParseUtility.HasPrefix(source, index, "{"))
             {
-                index += 1;
                 closeStack.AddFirst((index, "}"));
+                index += 1;
             }
             else if (TokenParseUtility.HasPrefix(source, index, "//"))
             {
@@ -56,9 +56,9 @@ namespace FreePascalLexer.tokens
             
             result = new List<CommentToken>();
 
-            while (index < source.Length)
+            while (index <= source.Length)
             {
-                if (singleLine && source[index] == '\n')
+                if (singleLine && (index == source.Length || source[index] == '\n'))
                 {
                     // single line comment ended
                     var singleCommentToken = new CommentToken();
@@ -67,6 +67,11 @@ namespace FreePascalLexer.tokens
                     result.Add(singleCommentToken);
                     next = index;
                     return true;
+                }
+                // for other cases, break the loop
+                if (index == source.Length)
+                {
+                    break;
                 }
                 
                 
@@ -95,7 +100,7 @@ namespace FreePascalLexer.tokens
                             closeStack.RemoveFirst();
                             CommentToken ct = new CommentToken();
                             ct._from = pref.Item1;
-                            ct._to = index;
+                            ct._to = index + pref.Item2.Length;
                             result.Add(ct);
                         }
                         index += prevCommType.Length;
@@ -103,10 +108,6 @@ namespace FreePascalLexer.tokens
                         if (closeStack.Count == 0 && !singleLine)
                         {
                             // that's all ended
-                            var multiCommentToken = new CommentToken();
-                            multiCommentToken._from = startIndex;
-                            multiCommentToken._to = index;
-                            result.Add(multiCommentToken);
                             next = index;
                             return true;
                         }
@@ -116,20 +117,20 @@ namespace FreePascalLexer.tokens
                 
                 if (TokenParseUtility.HasPrefix(source, index, "(*"))
                 {
-                    index += 2;
                     closeStack.AddFirst((index, "*)"));
+                    index += 2;
                     continue;
                 }
                 else if (TokenParseUtility.HasPrefix(source, index, "{"))
                 {
-                    index += 1;
                     closeStack.AddFirst((index, "}"));
+                    index += 1;
                     continue;
                 }
                 else if (TokenParseUtility.HasPrefix(source, index, "//"))
                 {
-                    index += 2;
                     closeStack.AddFirst((index, "\n"));
+                    index += 1;
                     continue;
                 }
                 
