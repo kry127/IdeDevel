@@ -90,7 +90,11 @@ namespace FreePascalLexerUnitTests
                 (false, "     // another comment", new[] {(5, 23)}),
                 (false, "(* kek *)", new[] {(0, 9)}),
                 (false, "(* {foo} {bar} *)", new[] {(3, 8), (9, 14), (0, 17)}),
-                //(false, "{ (* some *) // body { once } }", new[] {(0, 9)}),
+                (false, "{ {even} (* MOAR *) // comments }", new[] {(2, 8), (9, 19), (20, 32), (0, 33)}),
+                (false, "{ (* some *) // body { once } }", new[] {(2, 12), (21, 29), (13, 30), (0, 31)}),
+                (false, "// dropie \n", new[] {(0, 10)}),
+                (true, "\\ oh \n no", new [] {(0, 0)}),
+                (true, "\\ oh {no} \n oh", new [] {(0, 0)}),
             })
             {
                 if (shouldFail)
@@ -111,6 +115,67 @@ namespace FreePascalLexerUnitTests
                         Assert.AreEqual(from, token.Position().Item1);
                         Assert.AreEqual(to, token.Position().Item2);
                     }
+                }
+            }
+        }
+        
+        
+        [Test]
+        public void ParseIdentifier()
+        {
+            foreach ((var shouldFail, var pascalString, var from, var to) in new[]
+            {
+                (false, "abc", 0, 3),
+                (false, "Vengardium_Leviossa", 0, 19),
+                (false, "Привет", 0, 6),
+                (true, "53va", 0, 0),
+                (true, "'==492-", 0, 0),
+            })
+            {
+                if (shouldFail)
+                {
+                    Assert.Throws<Exception>(() =>
+                        TokenParser.Parse(pascalString)
+                    );
+                }
+                else
+                {
+                    var tokens = TokenParser.Parse(pascalString);
+                    Assert.AreEqual(1, tokens.Length);
+                    var token = tokens[0];
+                    Assert.AreEqual(TokenType.Identifier, token.Type());
+                    Assert.AreEqual(from, token.Position().Item1);
+                    Assert.AreEqual(to, token.Position().Item2);
+                }
+            }
+        }
+        
+        
+        [Test]
+        public void ParseSymbol()
+        {
+            foreach ((var shouldFail, var pascalString, var from, var to) in new[]
+            {
+                (false, "<=", 0, 2),
+                (false, ">=", 0, 2),
+                (false, "<>", 0, 2),
+                (false, "><", 0, 2),
+            })
+            {
+                if (shouldFail)
+                {
+                    Assert.Throws<Exception>(() =>
+                        TokenParser.Parse(pascalString)
+                    );
+                }
+                else
+                {
+                    var tokens = TokenParser.Parse(pascalString);
+                    Assert.AreEqual(1, tokens.Length);
+                    var token = tokens[0];
+                    Assert.AreEqual(TokenType.Symbol, token.Type());
+                    Assert.AreEqual(from, token.Position().Item1);
+                    Assert.AreEqual(to, token.Position().Item2);
                 }
             }
         }

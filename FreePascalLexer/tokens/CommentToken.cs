@@ -100,7 +100,11 @@ namespace FreePascalLexer.tokens
                             closeStack.RemoveFirst();
                             CommentToken ct = new CommentToken();
                             ct._from = pref.Item1;
-                            ct._to = index + pref.Item2.Length;
+                            ct._to = index;
+                            if (k == i)
+                            {
+                                ct._to += pref.Item2.Length;
+                            }
                             result.Add(ct);
                         }
                         index += prevCommType.Length;
